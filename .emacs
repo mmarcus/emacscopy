@@ -3,174 +3,56 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ansi-color-faces-vector
-   [default default default italic underline success warning error])
- '(backup-directory-alist '(("." . "~/emacs-backups")))
- '(cua-enable-cua-keys nil)
- '(cua-enable-modeline-indications t)
- '(cua-mode t nil (cua-base))
- '(custom-enabled-themes '(tango-dark))
- '(default-input-method "TeX")
- '(delete-selection-mode t)
- '(dired-x-hands-off-my-keys nil)
- '(inhibit-startup-screen t)
- '(menu-bar-mode nil)
- '(package-selected-packages
-   '(embark rg orderless marginalia vertico dired-toggle which-key hydra auctex all-the-icons unicode-math-input latex-unicode-math-mode unicode-math-mode projectile-ag projectile-ripgrep counsel-tramp counsel-projectile amx all-the-icons-ivy-rich-mode which-key-posframe ivy-posframe company-posframe posframe diminish all-the-icons-ivy all-the-icons-ivy-rich company-quickhelp company-math company-auctex company color-moccur org-download magit kpm-list ivy-rich ivy-hydra counsel tuareg use-package))
- '(recentf-mode t)
- '(rg-command-line-flags '("--hidden"))
- '(safe-local-variable-values '((org-export-html-postamble)))
- '(show-paren-mode t)
- '(tool-bar-mode nil)
- '(use-package-compute-statistics t))
+ '(auth-source-save-behavior nil)
+ '(custom-enabled-themes '(tango-dark)))
 
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(erc-nick-default-face ((t nil)))
- '(highlight ((t (:background "olive drab" :foreground "#2e3436"))))
- '(region ((t (:extend t :background "AntiqueWhite2")))))
 
-(add-to-list 'load-path
-	     "~/lisp")
+
+(add-to-list 'load-path "~/lisp")
 
 
 
 ;; more packages from melpa
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(package-initialize)
+;;(package-initialize) called anyway since  package-enable-at-startup is not disabled
 
+(setq package-selected-packages
+      '(use-package
+	 all-the-icons
+	 diminish
+	 dune
+	 embark
+	 kpm-list
+	 marginalia
+	 orderless
+	 rg
+	 savehist
+	 tuareg
+	 unicode-math-input
+	 vertico
+	 which-key
+	 ))
 
-(when t
-  ;; Enable vertico
-(use-package vertico
-  :ensure t
-  :init
-  (vertico-mode)
-  :bind
-  (:map vertico-map
-         ("C-v" . vertico-scroll-up)
-         ("M-v" . vertico-scroll-down))  
-  :config
-  ;; the first four of these  don't work for binding but the last two do. use :bind
-  ;; above instead
-  ;; (define-key vertico-map [remap scroll-up-command] 'vertico-scroll-up) 
-  ;; (define-key vertico-map [remap scroll-down-command] 'vertico-scroll-down)
-  ;; (define-key vertico-map [remap cua-scroll-up] 'vertico-scroll-up)
-  ;; (define-key vertico-map [remap cua-scroll-down] 'vertico-scroll-down)
-  ;; (define-key vertico-map (kbd "C-v") 'vertico-scroll-up) 
-  ;; (define-key vertico-map (kbd "M-v") 'vertico-scroll-down) 
+;; Install packages with (package-install-selected-packages)
+;; Remove packages with (package-autoremove)
+;; If you want to automate that, maybe add them to your 'emacs-startup-hook'?
 
-
-  ;; Different scroll margin
-  ;; (setq vertico-scroll-margin 0)
-
-  ;; Show more candidates
-  ;; (setq vertico-count 20)
-
-  ;; Grow and shrink the Vertico minibuffer
-  ;; (setq vertico-resize t)
-
-  ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
-  ;; (setq vertico-cycle t)
-  )
-
-;; Persist history over Emacs restarts. Vertico sorts by history position.
-(use-package savehist
-  :ensure t
-  :init
-  (savehist-mode))
-
-;; Enable rich annotations using the Marginalia package
-(use-package marginalia
-  :ensure t
-  ;; Either bind `marginalia-cycle' globally or only in the minibuffer
-  :bind (("M-A" . marginalia-cycle)
-         :map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
-
-  ;; The :init configuration is always executed (Not lazy!)
-  :init
-
-  ;; Must be in the :init section of use-package such that the mode gets
-  ;; enabled right away. Note that this forces loading the package.
-  (marginalia-mode))
-
-(use-package embark
-  :ensure t
-
-  :bind
-  (("C-." . embark-act)         ;; pick some comfortable binding
-   ("C-;" . embark-dwim)        ;; good alternative: M-.
-   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
-
-  :init
-
-  ;; Optionally replace the key help with a completing-read interface
-;;  (setq prefix-help-command #'embark-prefix-help-command)
-
-  ;; Show the Embark target at point via Eldoc.  You may adjust the Eldoc
-  ;; strategy, if you want to see the documentation from multiple providers.
-  (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
-  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
-
-  :config
-
-  ;; Hide the mode line of the Embark live/completions buffers
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
-
-(use-package rg)
-
-(use-package orderless
-  :ensure t
-  :custom
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion))))
-  (setq completion-category-defaults  nil))
+(eval-when-compile
+  (require 'use-package))
 
 ;; A few more useful configurations...
-(use-package emacs
-  :init
-  ;; Add prompt indicator to `completing-read-multiple'.
-  ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
-  (defun crm-indicator (args)
-    (cons (format "[CRM%s] %s"
-                  (replace-regexp-in-string
-                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
-                   crm-separator)
-                  (car args))
-          (cdr args)))
-  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
 
-  ;; Do not allow the cursor in the minibuffer prompt
-  (setq minibuffer-prompt-properties
-        '(read-only t cursor-intangible t face minibuffer-prompt))
-  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
-  ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
-  ;; Vertico commands are hidden in normal buffers.
-  ;; (setq read-extended-command-predicate
-  ;;       #'command-completion-default-include-p)
 
-  ;; Enable recursive minibuffers
-  (setq enable-recursive-minibuffers t))
-);;when t
 
-(unless nil
 
-  (use-package all-the-icons
-  :ensure t
+
+(use-package all-the-icons
   :if (display-graphic-p))
 
 ;; (use-package all-the-icons-ivy
-;;   :ensure t
-;;   :disabled t
+;;   ;;   :disabled
 ;;   :after (all-the-icons ivy)
 ;;   :custom (all-the-icons-ivy-buffer-commands '(ivy-switch-buffer-other-window))
 ;;   :config
@@ -179,15 +61,14 @@
 ;;   (all-the-icons-ivy-setup))
 
 (use-package all-the-icons-ivy-rich
-  :ensure t
+  :disabled
   :init (all-the-icons-ivy-rich-mode 1))
 
 ;; (use-package amx
-;;   :ensure t)
+;;   )
 
 ;; (use-package auctex
-;;   :ensure t
-;;   :demand t
+;;   ;;   :demand t
 ;;   :no-require t
 ;;   :mode ("\\.tex\\'" . TeX-latex-mode)
 ;;   :config
@@ -208,7 +89,7 @@
 ;;     latex-help-cmd-alist))
 
 (use-package color-moccur
-  :ensure t
+  :disabled
   :commands (isearch-moccur isearch-all isearch-moccur-all)
   :bind (("M-s O" . moccur)
          :map isearch-mode-map
@@ -216,8 +97,7 @@
          ("M-O" . isearch-moccur-all)))
 
 ;; (use-package company
-;;   :ensure t
-;;   :defer 5
+;;   ;;   :defer 5
 ;; 					;  :diminish
 ;;   :commands (company-mode company-indent-or-complete-common)
 ;;   :init
@@ -287,27 +167,22 @@
 ;;   (global-company-mode 1))
 
 ;; (use-package company-auctex
-;;   :ensure t
-;;   :after (company latex auctex))
+;;   ;;   :after (company latex auctex))
 
 ;; (use-package company-math
-;;   :ensure t
-;;   :after company
+;;   ;;   :after company
 ;;   :defer t)
 
 ;; (use-package company-posframe
-;;   :ensure t
-;;   :after (company posframe))
+;;   ;;   :after (company posframe))
 
 ;; (use-package company-quickhelp
-;;   :ensure t
-;;   :after company
+;;   ;;   :after company
 ;;   :bind (:map company-active-map
 ;;               ("C-c ?" . company-quickhelp-manual-begin)))
 
 ;; (use-package counsel
-;;   :ensure t
-;;   :after ivy
+;;   ;;   :after ivy
 ;;   :demand t
 ;;   :diminish
 ;;   :bind (("C-*"     . counsel-org-agenda-headlines)
@@ -321,22 +196,18 @@
 ;; 	 ))
 
 ;; (use-package counsel-projectile
-;;   :ensure t
-;;   :after (counsel projectile)
+;;   ;;   :after (counsel projectile)
 ;;   :config
 ;;   (counsel-projectile-mode 1))
 
 ;; (use-package counsel-tramp
-;;   :ensure t
-;;   :commands counsel-tramp)
+;;   ;;   :commands counsel-tramp)
 
 (use-package diminish
-  :ensure t
   :demand t)
 
 ;; (use-package dired-toggle
-;;   :ensure t
-;;   :disabled t
+;;   ;;   :disabled
 ;;   :bind (("s-<f3>" . #'dired-toggle)
 ;;          :map dired-mode-map
 ;;          ("q" . #'dired-toggle-quit)
@@ -364,12 +235,37 @@
 ;;                       (load "dired-x")
 ;;                       )))
 
+(use-package dune)
+
+(use-package embark
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  ;;  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc.  You may adjust the Eldoc
+  ;; strategy, if you want to see the documentation from multiple providers.
+  (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
 ;; (use-package hydra
-;;   :ensure t)
+;;   )
 
 ;; (use-package ivy
-;;   :ensure t
-;;   :diminish
+;;   ;;   :diminish
 ;;   :demand t
 
 ;;   :bind (("C-x b" . ivy-switch-buffer)
@@ -404,17 +300,14 @@
 
 ;; (use-package ivy-hydra
 ;;   :diminish
-;;   :ensure t
-;;   :after (ivy hydra)
+;;   ;;   :after (ivy hydra)
 ;;   :defer t)
 
 ;; (use-package ivy-posframe
-;;   :ensure t
-;;   :after (ivy posframe))
+;;   ;;   :after (ivy posframe))
 
 ;; (use-package ivy-rich
-;;   :ensure t
-;;   :after ivy
+;;   ;;   :after ivy
 ;;   :demand t
 ;;   :config
 ;;   (ivy-rich-mode 1)
@@ -422,8 +315,9 @@
 ;;         ivy-rich-switch-buffer-align-virtual-buffer t
 ;;         ivy-rich-path-style 'abbrev))
 
+(use-package jwiegley)
+
 (use-package kpm-list
-  :ensure t
   :bind (("C-x C-b" . kpm-list)))
 
 ;; (use-package latex
@@ -475,19 +369,33 @@
 
 ;; (use-package latex-math-preview
 ;;   :disabled
-;;   :ensure t)
+;;   )
 
 ;; (use-package latex-unicode-math-mode
-;;   :ensure t
-;;   :config
+;;   ;;   :config
 ;;   :commands (latex-unicode-mode
 ;; 	     latex-unicode-math-mode
 ;; 	     latex-unicode-convert-region latex-unicode-convert-buffer
 ;; 	     latex-unicode-invert-region latex-unicode-invert-buffer))
 
 (use-package magit
+  :disabled
   :defer t
-  :ensure t)
+  )
+
+;; Enable rich annotations using the Marginalia package
+(use-package marginalia
+  ;; Either bind `marginalia-cycle' globally or only in the minibuffer
+  :bind (("M-A" . marginalia-cycle)
+         :map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+
+  ;; The :init configuration is always executed (Not lazy!)
+  :init
+
+  ;; Must be in the :init section of use-package such that the mode gets
+  ;; enabled right away. Note that this forces loading the package.
+  (marginalia-mode))
 
 (use-package matm-opam
   :load-path "lisp"
@@ -499,51 +407,108 @@
 
 ;; (use-package org-download
 ;;   :defer t
-;;   :ensure t)
+;;   )
+
+(use-package orderless
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion))))
+  (setq completion-category-defaults  nil))
 
 (use-package personal
   :load-path "lisp"
-  :config
-  (setq ring-bell-function 'my-bell-function)
-  (fset 'yes-or-no-p 'y-or-n-p)
-  ;; (add-hook 'mouse-leave-buffer-hook 'stop-using-minibuffer)
+  :init
+  ;; Add prompt indicator to `completing-read-multiple'.
+  ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
+  (defun crm-indicator (args)
+    (cons (format "[CRM%s] %s"
+                  (replace-regexp-in-string
+                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                   crm-separator)
+                  (car args))
+          (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+
+  ;; Do not allow the cursor in the minibuffer prompt
+  (setq minibuffer-prompt-properties
+        '(read-only t cursor-intangible t face minibuffer-prompt))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+
+  ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
+  ;; Vertico commands are hidden in normal buffers.
+  ;; (setq read-extended-command-predicate
+  ;;       #'command-completion-default-include-p)
+
+  ;; Enable recursive minibuffers
+  (setq enable-recursive-minibuffers t)
+
+ ;; :config
+  (defalias 'yes-or-no-p 'y-or-n-p)
+;;  (add-hook 'mouse-leave-buffer-hook 'stop-using-minibuffer)
+  ;; (require-theme 'modus-themes) ; `require-theme' is ONLY for the built-in Modus themes
+
+  ;; ;; Add all your customizations prior to loading the themes
+  ;; (setq modus-themes-italic-constructs t
+  ;;       modus-themes-bold-constructs nil)
+
+  ;; ;; ;; Maybe define some palette overrides, such as by using our presets
+  ;; ;; (setq modus-themes-common-palette-overrides
+  ;; ;;       modus-themes-preset-overrides-intense)
+
+  ;; ;; Load the theme of your choice.
+  ;; (load-theme 'modus-vivendi)
+  ;; (setq modus-themes-to-toggle '(modus-vivendi-tinted modus-operandi-tinted))
+  ;; ;;(modus-themes-toggle)
+  
+
   :bind (("C-c u" . switch-math-input-method)
          ("C-c M-q" . unfill-paragraph)
+	 ;;("<f5>" . modus-themes-toggle)
 	 :map comint-mode-map
-	 ("C-c M-o" . comint-clear-buffer)))
+	 ("C-c M-o" . comint-clear-buffer))
+  :custom
+  (tool-bar-mode nil))
 
 
-;; (use-package posframe
-;;   :ensure t
-;;   :config
-;;   (require 'posframe))
 
-;; (use-package projectile
-;;   :ensure t
-;;   :defer 5
-;;   :diminish
-;;   :bind* (("C-c TAB" . projectile-find-other-file)
-;;           ("C-c P" . (lambda () (interactive)
-;;                        (projectile-cleanup-known-projects)
-;;                        (projectile-discover-projects-in-search-path))))
-;;   :bind-keymap ("C-c p" . projectile-command-map)
-;;   :config
-;;   (projectile-global-mode)
+;; (use-package posframe                      
+;;   :config                                  
+;;   (require 'posframe))                     
 
-;;   (defun my-projectile-invalidate-cache (&rest _args)
-;;     ;; We ignore the args to `magit-checkout'.
-;;     (projectile-invalidate-cache nil))
 
-;;   (eval-after-load 'magit-branch
-;;     '(progn
-;;        (advice-add 'magit-checkout
-;;                    :after #'my-projectile-invalidate-cache)
-;;        (advice-add 'magit-branch-and-checkout
-;;                    :after #'my-projectile-invalidate-cache))))
 
-;; (use-package projectile-ripgrep
-;;   :ensure t
-;;   :after projectile)
+
+(use-package projectile
+  :disabled
+  :defer 5
+  :diminish
+  :bind* (("C-c TAB" . projectile-find-other-file)
+          ("C-c P" . (lambda () (interactive)
+		       (projectile-cleanup-known-projects)
+		       (projectile-discover-projects-in-search-path))))
+  :bind-keymap ("C-c p" . projectile-command-map)
+  :config
+  (projectile-global-mode)
+
+  (defun my-projectile-invalidate-cache (&rest _args)
+    ;; We ignore the args to `magit-checkout'.
+    (projectile-invalidate-cache nil))
+
+  (eval-after-load 'magit-branch
+    '(progn
+       (advice-add 'magit-checkout
+                   :after #'my-projectile-invalidate-cache)
+       (advice-add 'magit-branch-and-checkout
+                   :after #'my-projectile-invalidate-cache))))
+
+(use-package projectile-ripgrep
+  :disabled
+  :after projectile)
+
+
+(use-package rg
+  :config
+  (rg-enable-default-bindings))
 
 ;; (use-package swiper
 ;;   :disabled
@@ -551,15 +516,58 @@
 ;;   :after ivy
 ;;   :bind (("C-s" . swiper)))
 
-(use-package tuareg
-  :ensure t)
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
 
-(use-package unicode-math-input
-  :ensure t)
+(use-package tuareg)
+
+(use-package unicode-math-input)
+
+(use-package vc
+  :defer t
+  :custom
+  (vc-command-messages t)
+  (vc-follow-symlinks t)
+  (vc-git-diff-switches '("-w" "-U3"))
+  (vc-handled-backends '(GIT))
+  (vc-make-backup-files t))
+
+(use-package vertico
+  :init
+  (vertico-mode)
+  :bind
+  (:map vertico-map
+        ("C-v" . vertico-scroll-up)
+        ("M-v" . vertico-scroll-down))  
+  :config
+  ;; the first four of these  don't work for binding but the last two do. use :bind
+  ;; above instead
+  ;; (define-key vertico-map [remap scroll-up-command] 'vertico-scroll-up) 
+  ;; (define-key vertico-map [remap scroll-down-command] 'vertico-scroll-down)
+  ;; (define-key vertico-map [remap cua-scroll-up] 'vertico-scroll-up)
+  ;; (define-key vertico-map [remap cua-scroll-down] 'vertico-scroll-down)
+  ;; (define-key vertico-map (kbd "C-v") 'vertico-scroll-up) 
+  ;; (define-key vertico-map (kbd "M-v") 'vertico-scroll-down) 
+
+
+  ;; Different scroll margin
+  ;; (setq vertico-scroll-margin 0)
+
+  ;; Show more candidates
+  ;; (setq vertico-count 20)
+
+  ;; Grow and shrink the Vertico minibuffer
+  ;; (setq vertico-resize t)
+
+  ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
+  ;; (setq vertico-cycle t)
+  )
+
 
 
 (use-package which-key
-  :ensure t
   :defer 5
   :diminish
   :commands which-key-mode
@@ -567,10 +575,18 @@
   (which-key-mode))
 
 ;; (use-package which-key-posframe
-;;   :ensure t
-;;   :after (which-key posframe))
+;;   ;;   :after (which-key posframe))
 
-(server-start)
-);;unless t
+;;(server-start)
 
 
+
+;; ## added by OPAM user-setup for emacs / base ## 56ab50dc8996d2bb95e7856a6eddb17b ## you can edit, but keep this line
+;;(require 'opam-user-setup "~/.emacs.d/opam-user-setup.el")
+;; ## end of OPAM user-setup addition for emacs / base ## keep this line
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
