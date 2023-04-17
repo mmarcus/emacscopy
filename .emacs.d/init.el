@@ -1,14 +1,3 @@
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(ef-deuteranopia-dark) nil nil "Customized with use-package personal")
- '(custom-safe-themes
-   '("dbc6d947d551aa03090daf6256233454c6a63240e17a8f3d77889d76fef1749d" "f74e8d46790f3e07fbb4a2c5dafe2ade0d8f5abc9c203cd1c29c7d5110a85230" "293b941e1600b4414ee619c4d44a8eadceccf51aed45aec7c07d63d2e9bb90a8" default))
- '(lsp-ocaml-lang-server-command
-   '("~/node_modules/.bin/ocaml-language-server-unused" "--stdio"))
-)
 
 
 
@@ -242,30 +231,24 @@
   (consult-find-args "find .")
   (consult-dir-project-list-function 'consult-dir-projectile-dirs))
 
+
 (use-package corfu
-  ;; Optional customizations
-  ;; :custom
-  ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-  ;; (corfu-auto t)                 ;; Enable auto completion
-  ;; (corfu-separator ?\s)          ;; Orderless field separator
-  ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
-  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-  ;; (corfu-preview-current nil)    ;; Disable current candidate preview
-  ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
-  ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-  ;; (corfu-scroll-margin 5)        ;; Use scroll margin
+  ;; TAB-and-Go customizations
+  :custom
+  (corfu-cycle t)           ;; Enable cycling for `corfu-next/previous'
+  (corfu-preselect 'prompt) ;; Always preselect the prompt
+  (corfu-auto t)
+  (corfu-popupinfo-mode t)
+  ;; Use TAB for cycling, default is `corfu-complete'.
+  :bind
+  (:map corfu-map
+        ("TAB" . corfu-next)
+        ([tab] . corfu-next)
+        ("S-TAB" . corfu-previous)
+        ([backtab] . corfu-previous))
 
-  ;; Enable Corfu only for certain modes.
-  ;; :hook ((prog-mode . corfu-mode)
-  ;;        (shell-mode . corfu-mode)
-  ;;        (eshell-mode . corfu-mode))
-
-  ;; Recommended: Enable Corfu globally.
-  ;; This is recommended since Dabbrev can be used globally (M-/).
-  ;; See also `corfu-exclude-modes'.
   :init
   (global-corfu-mode))
-
 
 
 
@@ -393,7 +376,6 @@
 ;;  (setq enable-recursive-minibuffers t)
 
  ;; :config
-  (defalias 'yes-or-no-p 'y-or-n-p)
 ;;  (add-hook 'mouse-leave-buffer-hook 'stop-using-minibuffer)
   ;; (require-theme 'modus-themes) ; `require-theme' is ONLY for the built-in Modus themes
 
@@ -409,7 +391,7 @@
   ;; (load-theme 'modus-vivendi)
   ;; (setq modus-themes-to-toggle '(modus-vivendi-tinted modus-operandi-tinted))
   ;; ;;(modus-themes-toggle)
-  
+  (load-theme 'ef-deuteranopia-dark t)
 
   :bind (("C-c u" . switch-math-input-method)
          ("C-c M-q" . unfill-paragraph)
@@ -417,12 +399,14 @@
 	 :map comint-mode-map
 	 ("C-c M-o" . comint-clear-buffer))
   :custom
+  (custom-file "~/.emacs.d/settings.el")
   (tool-bar-mode nil)
   (auth-source-save-behavior nil)	  
-  (custom-enabled-themes '(ef-deuteranopia-dark))	  
+;;  (custom-enabled-themes '(ef-deuteranopia-dark))	  
   (recentf-mode t)
   (inhibit-startup-screen t)
-  (backup-directory-alist '(("." . "~/emacs-backups"))))			  
+  (backup-directory-alist '(("." . "~/emacs-backups")))
+  (use-short-answers t))			  
 
 (use-package popper
   :after projectile
@@ -467,9 +451,9 @@
        (advice-add 'magit-branch-and-checkout
                    :after #'my-projectile-invalidate-cache)))
   :custom
+  (projectile-switch-project-action 'projectile-dired)
   (projectile-project-search-path
-   '("~/stow"
-     ("~/ml" . 1)
+   '(("~/ml" . 1)
      ("~/projects" . 1)
      ("~/foreign-projects" . 1))))
 
@@ -572,3 +556,10 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("dbc6d947d551aa03090daf6256233454c6a63240e17a8f3d77889d76fef1749d" default)))
