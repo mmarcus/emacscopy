@@ -108,7 +108,10 @@
   (add-to-list 'completion-at-point-functions #'cape-line)
   )
 
-
+(use-package comint
+  :config
+  :bind (:map comint-mode-map)
+  ("C-c M-o" . comint-clear-buffer))
 
 (use-package consult
   ;; Replace bindings. Lazily loaded due by `use-package'.
@@ -232,14 +235,15 @@
   (consult-dir-project-list-function 'consult-dir-projectile-dirs))
 
 (use-package consult-projectile
-  :after (consult projectile))
+  :after (consult projectile)
+  :bind ("C-c q" . consult-projectile))
 
 (use-package corfu
   ;; TAB-and-Go customizations
   :custom
   (corfu-cycle t)           ;; Enable cycling for `corfu-next/previous'
   (corfu-preselect 'prompt) ;; Always preselect the prompt
-  (corfu-auto t)
+;;  (corfu-auto t)
   (corfu-popupinfo-mode t)
   ;; Use TAB for cycling, default is `corfu-complete'.
   :bind
@@ -402,8 +406,6 @@
   :bind (("C-c u" . switch-math-input-method)
          ("C-c M-q" . unfill-paragraph)
 	 ;;("<f5>" . modus-themes-toggle)
-	 ;;:map comint-mode-map
-	 ;;("C-c M-o" . comint-clear-buffer)
 	 )
   :custom
   (custom-file "~/.emacs.d/settings.el")
