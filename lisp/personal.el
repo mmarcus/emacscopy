@@ -20,7 +20,7 @@
     (comint-truncate-buffer)))
 
 ;; let's bind the new command to a keycombo
-(define-key comint-mode-map "\C-c\M-o" #'comint-clear-buffer)
+;;(define-key comint-mode-map "\C-c\M-o" #'comint-clear-buffer)
 
 
 (defun unfill-paragraph ()
@@ -37,14 +37,6 @@
   (if (equal current-input-method "TeX")
     (set-input-method "unicode-math")
   (set-input-method "TeX")))
-
-;; stop beeping when mouse scroll out of range
-(defun my-bell-function ()
-  (unless (memq this-command
-		'(isearch-abort abort-recursive-edit exit-minibuffer
-				keyboard-quit mwheel-scroll down up next-line previous-line
-				backward-char forward-char))
-    (ding)))
 
 
 (provide 'personal)

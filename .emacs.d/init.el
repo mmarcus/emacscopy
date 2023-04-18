@@ -1,7 +1,7 @@
 
 
 
-(add-to-list 'load-path "~/lisp")
+;;(add-to-list 'load-path "~/lisp")
 
 
 
@@ -231,6 +231,8 @@
   (consult-find-args "find .")
   (consult-dir-project-list-function 'consult-dir-projectile-dirs))
 
+(use-package consult-projectile
+  :after (consult projectile))
 
 (use-package corfu
   ;; TAB-and-Go customizations
@@ -286,27 +288,30 @@
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
-                 (window-parameters (mode-line-format . none))))
+                 (window-parameters (mode-line-format . none)))
+	       )
 
-  
+  (with-eval-after-load 'ace-window
+    (eval-when-compile
+      (defmacro my/embark-ace-action (fn)
+	`(defun ,(intern (concat "my/embark-ace-" (symbol-name fn))) ()
+	   (interactive)
+	   (with-demoted-errors "%s"
+             (require 'ace-window)
+             (let ((aw-dispatch-always t))
+               (aw-switch-to-window (aw-select nil))
+               (call-interactively (symbol-function ',fn)))))))
+    (define-key embark-file-map     (kbd "o") (my/embark-ace-action find-file))
+    (define-key embark-buffer-map   (kbd "o") (my/embark-ace-action switch-to-buffer))
+    (define-key embark-bookmark-map (kbd "o") (my/embark-ace-action bookmark-jump))
+    ))
 
+(use-package embark-consult
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
-  ;; (eval-when-compile
-  ;;   (defmacro my/embark-ace-action (fn)
-  ;;     `(defun ,(intern (concat "my/embark-ace-" (symbol-name fn))) ()
-  ;; 	 (interactive)
-  ;; 	 (with-demoted-errors "%s"
-  ;;          (require 'ace-window)
-  ;;          (let ((aw-dispatch-always t))
-  ;;            (aw-switch-to-window (aw-select nil))
-  ;;            (call-interactively (symbol-function ',fn)))))))
-  ;; (define-key embark-file-map     (kbd "o") (my/embark-ace-action find-file))
-  ;; (define-key embark-buffer-map   (kbd "o") (my/embark-ace-action switch-to-buffer))
-  ;; (define-key embark-bookmark-map (kbd "o") (my/embark-ace-action bookmark-jump)) 
-  )
-
-
-(use-package jwiegley)
+(use-package jwiegley
+  :load-path "~/lisp")
 
 (use-package kpm-list
   :bind (("C-x C-b" . kpm-list)))
@@ -349,7 +354,8 @@
   (setq completion-category-defaults  nil))
 
 (use-package personal
-  :load-path "lisp"
+  :demand t
+  :load-path "~/lisp"
   :init
   ;; Add prompt indicator to `completing-read-multiple'.
   ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
@@ -396,8 +402,9 @@
   :bind (("C-c u" . switch-math-input-method)
          ("C-c M-q" . unfill-paragraph)
 	 ;;("<f5>" . modus-themes-toggle)
-	 :map comint-mode-map
-	 ("C-c M-o" . comint-clear-buffer))
+	 ;;:map comint-mode-map
+	 ;;("C-c M-o" . comint-clear-buffer)
+	 )
   :custom
   (custom-file "~/.emacs.d/settings.el")
   (tool-bar-mode nil)
@@ -409,7 +416,7 @@
   (use-short-answers t))			  
 
 (use-package popper
-  :after projectile
+;;  :after projectile
   :bind (("C-`"   . popper-toggle-latest)
          ("C-~"   . popper-cycle)
          ("C-M-`" . popper-toggle-type))
