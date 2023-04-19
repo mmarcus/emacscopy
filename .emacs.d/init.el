@@ -11,8 +11,8 @@
 ;;(package-initialize) called anyway since  package-enable-at-startup is not disabled
 
 (setq package-selected-packages
-      '(use-package
-	 ;; ace-window
+      '(;;use-package
+	 ace-window
 	 all-the-icons
 	 cape
 	 consult
@@ -27,6 +27,7 @@
 	 ;;eglot ;;29 built-in
 	 embark
 	 embark-consult
+	 expand-region
 	 kpm-list
 	 ;; lsp-treemacs ;;using eglot for now instead
 	 ;; lsp-ui ;;using eglot for now instead
@@ -50,13 +51,14 @@
 	 ;;zenburn-theme
 	 ))
 
+
 ;; Install packages with (package-install-selected-packages)
 
 ;; Remove packages with (package-autoremove)
 ;; If you want to automate that, maybe add them to your 'emacs-startup-hook'?
 
-(eval-when-compile
-  (require 'use-package))
+;;(eval-when-compile
+;;  (require 'use-package))
 
 ;; A few more useful configurations...
 
@@ -66,7 +68,9 @@
   :bind* ("M-o" . ace-window)
 ;;  :custom
 ;;  (aw-dispatch-when-more-than 6)
-;;  (aw-scope 'frame)
+  ;;  (aw-scope 'frame)
+  :config
+  (advice-add 'aw--switch-buffer :override #'consult-buffer)
   )
 
 
@@ -235,7 +239,7 @@
   (consult-dir-project-list-function 'consult-dir-projectile-dirs))
 
 (use-package consult-projectile
-  :after (consult projectile)
+;;  :after (consult projectile)
   :bind ("C-c q" . consult-projectile))
 
 (use-package corfu
@@ -314,6 +318,9 @@
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
+(use-package expand-region
+  :bind ("C-=" . er/expand-region))
+
 (use-package jwiegley
   :load-path "~/lisp")
 
@@ -340,7 +347,7 @@
   (marginalia-mode))
 
 (use-package matm-opam
-  :load-path "lisp"
+  :load-path "~/lisp"
   :hook (tuareg-load . opam-setup)
   )
 ;; (use-package opam-user-setup
@@ -422,17 +429,16 @@
   :bind (("C-`"   . popper-toggle-latest)
          ("C-~"   . popper-cycle)
          ("C-M-`" . popper-toggle-type))
-  :init
-  (setq popper-reference-buffers
+  :custom
+  (popper-reference-buffers
         '("\\*Messages\\*"
           "Output\\*$"
           "\\*Async Shell Command\\*"
           help-mode
           compilation-mode))
-  (popper-mode +1)
-  (popper-echo-mode +1) ; For echo area hints
-;;  :custom
-;;  (popper-group-function 'popper-group-by-projectile)
+  (popper-mode t)
+  (popper-echo-mode t)
+  ;;  (popper-group-function 'popper-group-by-projectile)
   )                
 
 
