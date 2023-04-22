@@ -18,9 +18,12 @@
 	 consult
 	 consult-dir
 	 ;;consult-project-extra
-	 corfu
+;;	 consult-eglot
+;;	 consult-flycheck
+;;	 consult-flyspell
 	 ;; consult-lsp ;;using eglot for now instead
 	 consult-projectile
+	 corfu
 	 diminish
 	 dune
 	 ef-themes
@@ -47,6 +50,7 @@
 	 treemacs-projectile
 	 unicode-math-input
 	 vertico
+	 vterm
 	 which-key
 	 ;;zenburn-theme
 	 ))
@@ -120,13 +124,13 @@
 (use-package consult
   ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings (mode-specific-map)
-         ;; ("C-c M-x" . consult-mode-command)
-         ;; ("C-c h" . consult-history)
-         ;; ("C-c K" . consult-kmacro)
-         ;; ("C-c i" . consult-info)
-         ;; ([remap Info-search] . consult-info)
+         ("C-c M-x" . consult-mode-command)
+         ("C-c h" . consult-history)
+         ("C-c K" . consult-kmacro)
+         ("C-c i" . consult-info)
+         ([remap Info-search] . consult-info)
 
-         ;; ("C-*"     . consult-org-heading)
+         ("C-*"     . consult-org-heading)
          ;; ("C-c e l" . find-library)
          ;; ("C-c e q" . set-variable)
          ;; ("C-h e l" . find-library)
@@ -140,6 +144,7 @@
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
          ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
          ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+	 ("C-x t b" . consult-buffer-other-tab  )  ;; orig. switch-to-buffer-other-tab
          ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
          ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
          ;; Other custom bindings
@@ -265,7 +270,9 @@
 (use-package diminish
   :demand t)
 
-
+(use-package dired
+  :custom
+  (dired-kill-when-opening-new-dired-buffer t))
 
 (use-package dune)
 
@@ -422,9 +429,82 @@
   (recentf-mode t)
   (inhibit-startup-screen t)
   (backup-directory-alist '(("." . "~/emacs-backups")))
-  (use-short-answers t))			  
+  (use-short-answers t)
+  (desktop-save-mode t)
+  (display-buffer-alist  ;; from prot
+        '(;; no window
+          ("\\`\\*Async Shell Command\\*\\'"
+           (display-buffer-no-window))
+          ;; bottom side window
+          ("\\*Org Select\\*" ; the `org-capture' key selection
+           (display-buffer-in-side-window)
+           (dedicated . t)
+           (side . bottom)
+           (slot . 0)
+           (window-parameters . ((mode-line-format . none))))
+          ;; bottom buffer (NOT side window)
+          ((or . ((derived-mode . flymake-diagnostics-buffer-mode)
+                  (derived-mode . flymake-project-diagnostics-mode)
+                  (derived-mode . messages-buffer-mode)
+                  (derived-mode . backtrace-mode)
+                  "\\*\\(Warnings\\|Compile-Log\\|Org Links\\)\\*"
+                  ,world-clock-buffer-name))
+           (display-buffer-reuse-mode-window display-buffer-at-bottom)
+           (window-height . 0.3)
+           (dedicated . t)
+           (preserve-size . (t . t)))
+          ("\\*Embark Actions\\*"
+           (display-buffer-reuse-mode-window display-buffer-at-bottom)
+           (window-height . fit-window-to-buffer)
+           (window-parameters . ((no-other-window . t)
+                                 (mode-line-format . none))))
+          ("\\*\\(Output\\|Register Preview\\).*"
+           (display-buffer-reuse-mode-window display-buffer-at-bottom))
+          ;; below current window
+          ((derived-mode . help-mode) ; See the hooks for `visual-line-mode'
+           (display-buffer-reuse-mode-window display-buffer-below-selected))
+          ("\\*\\vc-\\(incoming\\|outgoing\\|git : \\).*"
+           (display-buffer-reuse-mode-window display-buffer-below-selected)
+           (window-height . 0.1)
+           (dedicated . t)
+           (preserve-size . (t . t)))
+          ((derived-mode . log-view-mode)
+           (display-buffer-reuse-mode-window display-buffer-below-selected)
+           (window-height . 0.3)
+           (preserve-size . (t . t)))
+          ((derived-mode . reb-mode) ; M-x re-builder
+           (display-buffer-reuse-mode-window display-buffer-below-selected)
+           (window-height . 4) ; note this is literal lines, not relative
+           (dedicated . t)
+           (preserve-size . (t . t)))
+          ("\\*\\(Calendar\\|Bookmark Annotation\\|Buffer List\\|Occur\\).*"
+           (display-buffer-reuse-mode-window display-buffer-below-selected)
+           (window-height . fit-window-to-buffer))
+          ;; NOTE 2022-09-10: The following is for `ispell-word', though
+          ;; it only works because I override `ispell-display-buffer'
+          ;; with `prot-spell-ispell-display-buffer' and change the
+          ;; value of `ispell-choices-buffer'.
+          ("\\*ispell-top-choices\\*.*"
+           (display-buffer-reuse-mode-window display-buffer-below-selected)
+           (window-height . fit-window-to-buffer))
+          ;; same window
+
+          ;; NOTE 2023-02-17: `man' does not fully obey the
+          ;; `display-buffer-alist'.  It works for new frames and for
+          ;; `display-buffer-below-selected', but otherwise is
+          ;; unpredictable.  See `Man-notify-method'.
+
+          ;; ((or . ((derived-mode . Man-mode)
+          ;;         (derived-mode . woman-mode)
+          ;;         "\\*\\(Man\\|woman\\).*"))
+          ;;  (display-buffer-same-window))
+          )))		  
+;; (prot/display-buffer-shell-or-term-p ; see definition below
+;;           (display-buffer-reuse-window display-buffer-same-window))
+
 
 (use-package popper
+;;  :disabled
 ;;  :after projectile
   :bind (("C-`"   . popper-toggle-latest)
          ("C-~"   . popper-cycle)
@@ -550,6 +630,10 @@
 ;;   ;; Tidy shadowed file names
 ;;   :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
+(use-package vterm
+  :custom
+  (vterm-max-scrollback 10000))
+
 (use-package which-key
   :defer 5
   :diminish
@@ -565,16 +649,3 @@
 ;; ## added by OPAM user-setup for emacs / base ## 56ab50dc8996d2bb95e7856a6eddb17b ## you can edit, but keep this line
 ;;(require 'opam-user-setup "~/.emacs.d/opam-user-setup.el")
 ;; ## end of OPAM user-setup addition for emacs / base ## keep this line
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("dbc6d947d551aa03090daf6256233454c6a63240e17a8f3d77889d76fef1749d" default)))
