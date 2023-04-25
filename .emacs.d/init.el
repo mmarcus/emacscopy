@@ -15,6 +15,7 @@
 	 ace-window
 	 all-the-icons
 	 cape
+	 ;;company
 	 consult
 	 consult-dir
 	 ;;consult-project-extra
@@ -49,6 +50,7 @@
 	 treemacs
 	 treemacs-projectile
 	 unicode-math-input
+	 utop
 	 vertico
 	 vterm
 	 which-key
@@ -80,6 +82,10 @@
 
 (use-package all-the-icons
   :if (display-graphic-p))
+
+
+
+
 
 (use-package cape
   ;; Bind dedicated completion commands
@@ -431,6 +437,7 @@
   (backup-directory-alist '(("." . "~/emacs-backups")))
   (use-short-answers t)
   (desktop-save-mode t)
+  (winner-mode t)
   (display-buffer-alist  ;; from prot
         '(;; no window
           ("\\`\\*Async Shell Command\\*\\'"
