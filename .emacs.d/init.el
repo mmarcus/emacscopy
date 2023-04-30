@@ -629,6 +629,8 @@
 
   :bind (("C-c u" . switch-math-input-method)
          ("C-c M-q" . unfill-paragraph)
+	 ("C-c v" . burly-bookmark-windows)
+	 ("C-c V" . burly-open-bookmark)
 	 ;;("<f5>" . modus-themes-toggle)
 	 )
   :custom
