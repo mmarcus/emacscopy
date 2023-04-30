@@ -12,49 +12,58 @@
 
 (setq package-selected-packages
       '(;;use-package
-	 ace-window
-	 all-the-icons
-	 cape
-	 ;;company
-	 consult
-	 consult-dir
-	 ;;consult-project-extra
-;;	 consult-eglot
-;;	 consult-flycheck
-;;	 consult-flyspell
-	 ;; consult-lsp ;;using eglot for now instead
-	 consult-projectile
-	 corfu
-	 diminish
-	 dune
-	 ef-themes
-	 ;;eglot ;;29 built-in
-	 embark
-	 embark-consult
-	 expand-region
-	 kpm-list
-	 ;; lsp-treemacs ;;using eglot for now instead
-	 ;; lsp-ui ;;using eglot for now instead
-	 magit
-	 marginalia
-	 modus-themes
-	 orderless
-	 popper
-	 projectile
-	 projectile-ripgrep
-	 rainbow-delimiters
-	 rg
-	 savehist
-	 shackle
-	 tuareg
-	 treemacs
-	 treemacs-projectile
-	 unicode-math-input
-	 utop
-	 vertico
-	 vterm
-	 which-key
-	 ;;zenburn-theme
+	ace-window
+	all-the-icons
+	avy
+	avy-embark-collect
+	avy-flycheck
+	avy-flyspell
+	avy-zap
+	;;beframe
+	burly
+	cape
+	;;company
+	consult
+	consult-dir
+	;;consult-project-extra
+	;;	 consult-eglot
+	;;	 consult-flycheck
+	;;	 consult-flyspell
+	;; consult-lsp ;;using eglot for now instead
+	consult-projectile
+	corfu
+	diminish
+	dune
+	ef-themes
+	;;eglot ;;29 built-in
+	embark
+	embark-consult
+	expand-region
+	kpm-list
+	;; lsp-treemacs ;;using eglot for now instead
+	;; lsp-ui ;;using eglot for now instead
+	magit
+	marginalia
+;;	modus-themes
+	orderless
+	paredit
+	popper
+	projectile
+	projectile-ripgrep
+	rainbow-delimiters
+	rg
+	savehist
+	shackle
+	tuareg
+;;	treemacs
+;;	treemacs-projectile
+	unicode-math-input
+	utop
+	vertico
+	vterm
+	w3m
+	which-key
+	;;zenburn-theme
 	 ))
 
 
@@ -68,10 +77,72 @@
 
 ;; A few more useful configurations...
 
+(use-package avy
+  :bind ("C-:" . avy-goto-char-timer)
+  :custom
+  (avy-case-fold-search t)
+  (avy-keys '(?q ?e ?r ?u ?o ?p
+                 ?a ?s ?d ?f ?g ?h ?j
+                 ?k ?l ?' ?x ?c ?v ?b
+                 ?n ?, ?/))
+  (avy-timeout-seconds 0.6)
+  :functions (avy-setup-default)
+  :preface
+  (defun avy-action-kill-whole-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (kill-whole-line))
+    (select-window
+     (cdr
+      (ring-ref avy-ring 0)))
+    t)
+
+  (defun avy-action-copy-whole-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (cl-destructuring-bind (start . end)
+          (bounds-of-thing-at-point 'line)
+        (copy-region-as-kill start end)))
+    (select-window
+     (cdr
+      (ring-ref avy-ring 0)))
+    t)
+
+  (defun avy-action-yank-whole-line (pt)
+    (avy-action-copy-whole-line pt)
+    (save-excursion (yank))
+    t)
+
+  (defun avy-action-teleport-whole-line (pt)
+    (avy-action-kill-whole-line pt)
+    (save-excursion (yank)) t)
+
+  (defun avy-action-mark-to-char (pt)
+    (activate-mark)
+    (goto-char pt))
+  :config
+  (avy-setup-default)
+
+  (setf (alist-get ?k avy-dispatch-alist) 'avy-action-kill-stay
+        (alist-get ?K avy-dispatch-alist) 'avy-action-kill-whole-line)
+
+  (setf (alist-get ?y avy-dispatch-alist) 'avy-action-yank
+        (alist-get ?w avy-dispatch-alist) 'avy-action-copy
+        (alist-get ?W avy-dispatch-alist) 'avy-action-copy-whole-line
+        (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line)
+
+  (setf (alist-get ?t avy-dispatch-alist) 'avy-action-teleport
+        (alist-get ?T avy-dispatch-alist) 'avy-action-teleport-whole-line)
+
+  (setf (alist-get ?  avy-dispatch-alist) 'avy-action-mark-to-char))
 
 
 (use-package ace-window
-  :bind* ("M-o" . ace-window)
+  :demand
+  :after consult
+  :bind ([remap other-window] . ace-window)
+ 
+  
 ;;  :custom
 ;;  (aw-dispatch-when-more-than 6)
   ;;  (aw-scope 'frame)
@@ -84,42 +155,85 @@
   :if (display-graphic-p))
 
 
+(use-package beframe
+  :disabled
+  :after consult
+  :config
+  (defvar consult-buffer-sources)
+  (declare-function consult--buffer-state "consult")
+  
+
+  (defface beframe-buffer
+    '((t :inherit font-lock-string-face))
+    "Face for `consult' framed buffers.")
+
+  ;; (defvar beframe-consult-source-all
+  ;; `(:name "All Buffers"
+  ;;   :narrow   ?a
+  ;;   :hidden   t
+  ;;   :category buffer
+  ;;   :face     consult-buffer
+  ;;   :history  buffer-name-history
+  ;;   :state    ,#'consult--buffer-state....
+  ;;   :items ,(lambda () (consult--buffer-query
+  ;;                       :sort 'visibility
+  ;;                       :as #'buffer-name)))
+  ;; "All buffer candidate source for `consult-buffer'.")
+  ;; (add-to-list 'consult-buffer-sources 'beframe-consult-source-all)
 
 
+  (defvar beframe-consult-source-frame
+    `( :name     "Frame-specific buffers (current frame)"
+       :narrow   ?F
+       :category buffer
+       :face     beframe-buffer
+       :history  beframe-history
+       :items    ,#'beframe-buffer-names
+       :action   ,#'switch-to-buffer
+       :state    ,#'consult--buffer-state))
+
+  (add-to-list 'consult-buffer-sources 'beframe-consult-source-frame)
+  :custom
+  (beframe-mode t))
+
+(use-package burly
+  :custom
+  (burly-tabs-mode t))
 
 (use-package cape
   ;; Bind dedicated completion commands
   ;; Alternative prefix keys: C-c p, M-p, M-+, ...
   :bind (("M-p p" . completion-at-point) ;; capf
-         ("M-p t" . complete-tag)        ;; etags
+         ;;("M-p t" . complete-tag)        ;; etags
          ("M-p d" . cape-dabbrev)        ;; or dabbrev-completion
          ("M-p h" . cape-history)
          ("M-p f" . cape-file)
-         ("M-p k" . cape-keyword)
+         ;;("M-p k" . cape-keyword)
          ("M-p s" . cape-symbol)
          ("M-p a" . cape-abbrev)
          ("M-p l" . cape-line)
          ("M-p w" . cape-dict)
-         ("M-p \\" . cape-tex)
-         ("M-p _" . cape-tex)
-         ("M-p ^" . cape-tex)
-         ("M-p &" . cape-sgml)
-         ("M-p r" . cape-rfc1345))
+         ;; ("M-p \\" . cape-tex)
+         ;; ("M-p _" . cape-tex)
+         ;; ("M-p ^" . cape-tex)
+         ;; ("M-p &" . cape-sgml)
+         ;; ("M-p r" . cape-rfc1345)
+	 )
   :init
   ;; Add `completion-at-point-functions', used by `completion-at-point'.
   ;; NOTE: The order matters!
+  (add-to-list 'completion-at-point-functions #'cape-line)
+  (add-to-list 'completion-at-point-functions #'cape-symbol)
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-elisp-block)
   ;;(add-to-list 'completion-at-point-functions #'cape-history)
   ;;(add-to-list 'completion-at-point-functions #'cape-keyword)
-  (add-to-list 'completion-at-point-functions #'cape-tex)
+  ;;(add-to-list 'completion-at-point-functions #'cape-tex)
   ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
   ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
   ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
   ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-  (add-to-list 'completion-at-point-functions #'cape-symbol)
-  (add-to-list 'completion-at-point-functions #'cape-line)
   )
 
 (use-package comint
@@ -129,6 +243,7 @@
 
 (use-package consult
   ;; Replace bindings. Lazily loaded due by `use-package'.
+  :demand
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c M-x" . consult-mode-command)
          ("C-c h" . consult-history)
@@ -256,6 +371,7 @@
 (use-package corfu
   ;; TAB-and-Go customizations
   :custom
+  (tab-always-indent 'complete)
   (corfu-cycle t)           ;; Enable cycling for `corfu-next/previous'
   (corfu-preselect 'prompt) ;; Always preselect the prompt
 ;;  (corfu-auto t)
@@ -270,7 +386,6 @@
 
   :init
   (global-corfu-mode))
-
 
 
 (use-package diminish
@@ -325,6 +440,25 @@
     (define-key embark-file-map     (kbd "o") (my/embark-ace-action find-file))
     (define-key embark-buffer-map   (kbd "o") (my/embark-ace-action switch-to-buffer))
     (define-key embark-bookmark-map (kbd "o") (my/embark-ace-action bookmark-jump))
+    
+    ;; (eval-when-compile
+    ;;   (defmacro my/embark-split-action (fn split-type)
+    ;; 	`(defun ,(intern (concat "my/embark-"
+    ;; 				 (symbol-name fn)
+    ;; 				 "-"
+    ;; 				 (car (last  (split-string
+    ;;                                           (symbol-name split-type) "-"))))) ()
+    ;; 	   (interactive)
+    ;; 	   (funcall #',split-type)
+    ;; 	   (call-interactively #',fn))))
+
+    ;; (define-key embark-file-map     (kbd "2") (my/embark-split-action find-file split-window-below))
+    ;; (define-key embark-buffer-map   (kbd "2") (my/embark-split-action switch-to-buffer split-window-below))
+    ;; (define-key embark-bookmark-map (kbd "2") (my/embark-split-action bookmark-jump split-window-below))
+
+    ;; (define-key embark-file-map     (kbd "3") (my/embark-split-action find-file split-window-right))
+    ;; (define-key embark-buffer-map   (kbd "3") (my/embark-split-action switch-to-buffer split-window-right))
+    ;; (define-key embark-bookmark-map (kbd "3") (my/embark-split-action bookmark-jump split-window-right))
     ))
 
 (use-package embark-consult
@@ -376,6 +510,8 @@
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion))))
   (setq completion-category-defaults  nil))
+
+(use-package paredit)
 
 (use-package personal
   :demand t
@@ -433,10 +569,11 @@
   (auth-source-save-behavior nil)	  
 ;;  (custom-enabled-themes '(ef-deuteranopia-dark))	  
   (recentf-mode t)
+  (delete-selection-mode t)
   (inhibit-startup-screen t)
   (backup-directory-alist '(("." . "~/emacs-backups")))
   (use-short-answers t)
-  (desktop-save-mode t)
+  ;; (desktop-save-mode t)
   (winner-mode t)
   (display-buffer-alist  ;; from prot
         '(;; no window
@@ -505,7 +642,9 @@
           ;;         (derived-mode . woman-mode)
           ;;         "\\*\\(Man\\|woman\\).*"))
           ;;  (display-buffer-same-window))
-          )))		  
+          ))
+  (confirm-nonexistent-file-or-buffer t)
+  )		  
 ;; (prot/display-buffer-shell-or-term-p ; see definition below
 ;;           (display-buffer-reuse-window display-buffer-same-window))
 

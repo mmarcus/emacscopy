@@ -6,6 +6,7 @@
 				backward-char forward-char))
     (ding)))
 
+
 ;;abandon command when leave minibuffer
 (defun stop-using-minibuffer ()
   "kill the minibuffer"

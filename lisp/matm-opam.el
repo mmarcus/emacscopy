@@ -11,17 +11,24 @@
       ;; Register Merlin
       (add-to-list 'load-path (expand-file-name "emacs/site-lisp" opam-share))
       ;;    (add-to-list 'load-path "/home/mmarcus/.opam/default/share/emacs/site-lisp")
-;;      (autoload 'merlin-mode "merlin" nil t nil)
+      ;;      (autoload 'merlin-mode "merlin" nil t nil)
       ;; Automatically start it in OCaml buffers
-;;      (add-hook 'tuareg-mode-hook 'merlin-mode t)
-;;      (add-hook 'caml-mode-hook 'merlin-mode t)
+      ;;      (add-hook 'tuareg-mode-hook 'merlin-mode t)
+      ;;      (add-hook 'caml-mode-hook 'merlin-mode t)
       ;; Use opam switch to lookup ocamlmerlin binary
-;;      (setq merlin-command 'opam))
-    ))
+      ;;      (setq merlin-command 'opam))
+      ))
 
-   (use-package ocp-indent
-  ;;   :load-path "~/.opam/default/share/emacs/site-lisp"
-     :hook ((tuareg-mode caml-mode). ocp-setup-indent))
+  (use-package ocp-indent
+    ;;   :load-path "~/.opam/default/share/emacs/site-lisp"
+    :hook ((tuareg-mode caml-mode). ocp-setup-indent)
+    :config
+    
+    (defun ocp-indent-buffer-patched ()
+      (interactive nil)
+      (ocp-indent-region 1 (buffer-size)))
+    (advice-add 'ocp-indent-buffer :override #'ocp-indent-buffer-patched)
+    )
 
 
   ;; ## added by OPAM user-setup for emacs / base ## 56ab50dc8996d2bb95e7856a6eddb17b ## you can edit, but keep this line
