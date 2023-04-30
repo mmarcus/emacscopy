@@ -4,7 +4,6 @@
 ;;(add-to-list 'load-path "~/lisp")
 
 
-
 ;; more packages from melpa
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
@@ -420,6 +419,26 @@
 
   :config
 
+  (defun sudo-find-file (file)
+    "Open FILE as root."
+    (interactive "FOpen file as root: ")
+    (when (file-writable-p file)
+      (user-error "File is user writeable, aborting sudo"))
+    (find-file (if (file-remote-p file)
+                   (concat "/" (file-remote-p file 'method) ":"
+                           (file-remote-p file 'user) "@" (file-remote-p file 'host)
+                           "|sudo:root@"
+                           (file-remote-p file 'host) ":" (file-remote-p file 'localname))
+		 (concat "/sudo:root@localhost:" file))))
+
+  ;; To use sudo-find-file as an Embark action, you can run it (with
+  ;; M-x or a global keybinding) after calling embark-act, or shorten
+  ;; the process further by adding an entry to Embark’s file actions
+  ;; map:
+
+  (define-key embark-file-map (kbd "S") 'sudo-find-file)
+
+
   ;; Hide the mode line of the Embark live/completions buffers
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
@@ -428,18 +447,33 @@
 	       )
 
   (with-eval-after-load 'ace-window
-    (eval-when-compile
-      (defmacro my/embark-ace-action (fn)
-	`(defun ,(intern (concat "my/embark-ace-" (symbol-name fn))) ()
-	   (interactive)
-	   (with-demoted-errors "%s"
-             (require 'ace-window)
-             (let ((aw-dispatch-always t))
-               (aw-switch-to-window (aw-select nil))
-               (call-interactively (symbol-function ',fn)))))))
-    (define-key embark-file-map     (kbd "o") (my/embark-ace-action find-file))
-    (define-key embark-buffer-map   (kbd "o") (my/embark-ace-action switch-to-buffer))
-    (define-key embark-bookmark-map (kbd "o") (my/embark-ace-action bookmark-jump))
+    (defun embark-default-action-in-other-window ()
+      "Run the default embark action in another window."
+      (interactive))
+
+    (cl-defun run-default-action-in-other-window
+	(&rest rest &key run type &allow-other-keys)
+      (let ((default-action (embark--default-action type)))
+	(ace-select-window) ; or your preferred way to split
+	(funcall run :action default-action :type type rest)))
+
+    (setf (alist-get 'embark-default-action-in-other-window
+                     embark-around-action-hooks)
+	  '(run-default-action-in-other-window))
+
+    (define-key embark-general-map "O" #'embark-default-action-in-other-window)
+    ;; (eval-when-compile
+    ;;   (defmacro my/embark-ace-action (fn)
+    ;; 	`(defun ,(intern (concat "my/embark-ace-" (symbol-name fn))) ()
+    ;; 	   (interactive)
+    ;; 	   (with-demoted-errors "%s"
+    ;;          (require 'ace-window)
+    ;;          (let ((aw-dispatch-always t))
+    ;;            (aw-switch-to-window (aw-select nil))
+    ;;            (call-interactively (symbol-function ',fn)))))))
+    ;; (define-key embark-file-map     (kbd "o") (my/embark-ace-action find-file))
+    ;; (define-key embark-buffer-map   (kbd "o") (my/embark-ace-action switch-to-buffer))
+    ;; (define-key embark-bookmark-map (kbd "o") (my/embark-ace-action bookmark-jump))
     
     ;; (eval-when-compile
     ;;   (defmacro my/embark-split-action (fn split-type)
@@ -464,6 +498,11 @@
 (use-package embark-consult
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package eww
+  :defer t
+  :custom
+  (shr-inhibit-images  t))
 
 (use-package expand-region
   :bind ("C-=" . er/expand-region))
@@ -511,7 +550,29 @@
   (completion-category-overrides '((file (styles basic partial-completion))))
   (setq completion-category-defaults  nil))
 
-(use-package paredit)
+(use-package paredit
+  :diminish
+  :hook ((lisp-mode emacs-lisp-mode tuareg-mode) . paredit-mode)
+  ;; :bind (:map paredit-mode-map
+  ;;             ("[")
+  ;;             ("M-k"   . paredit-raise-sexp)
+  ;;             ("M-I"   . paredit-splice-sexp)
+  ;;             ("C-M-l" . paredit-recentre-on-sexp)
+  ;;             ("C-c ( n"   . paredit-add-to-next-list)
+  ;;             ("C-c ( p"   . paredit-add-to-previous-list)
+  ;;             ("C-c ( j"   . paredit-join-with-next-list)
+  ;;             ("C-c ( J"   . paredit-join-with-previous-list))
+  ;; :bind (:map lisp-mode-map       ("<return>" . paredit-newline))
+  ;; :bind (:map emacs-lisp-mode-map ("<return>" . paredit-newline))
+  ;; :hook (paredit-mode
+  ;;        . (lambda ()
+  ;;            (unbind-key "M-r" paredit-mode-map)
+  ;;            (unbind-key "M-s" paredit-mode-map)))
+  :config
+  (use-package eldoc
+    :config
+    (eldoc-add-command 'paredit-backward-delete
+                       'paredit-close-round)))
 
 (use-package personal
   :demand t
@@ -558,6 +619,13 @@
   ;; (setq modus-themes-to-toggle '(modus-vivendi-tinted modus-operandi-tinted))
   ;; ;;(modus-themes-toggle)
   (load-theme 'ef-deuteranopia-dark t)
+  (setq backup-enable-predicate
+      (lambda (name)
+        (and (normal-backup-enable-predicate name)
+             (not
+              (let ((method (file-remote-p name 'method)))
+                (when (stringp method)
+                  (member method '("su" "sudo"))))))))
 
   :bind (("C-c u" . switch-math-input-method)
          ("C-c M-q" . unfill-paragraph)
@@ -575,74 +643,74 @@
   (use-short-answers t)
   ;; (desktop-save-mode t)
   (winner-mode t)
-  (display-buffer-alist  ;; from prot
-        '(;; no window
-          ("\\`\\*Async Shell Command\\*\\'"
-           (display-buffer-no-window))
-          ;; bottom side window
-          ("\\*Org Select\\*" ; the `org-capture' key selection
-           (display-buffer-in-side-window)
-           (dedicated . t)
-           (side . bottom)
-           (slot . 0)
-           (window-parameters . ((mode-line-format . none))))
-          ;; bottom buffer (NOT side window)
-          ((or . ((derived-mode . flymake-diagnostics-buffer-mode)
-                  (derived-mode . flymake-project-diagnostics-mode)
-                  (derived-mode . messages-buffer-mode)
-                  (derived-mode . backtrace-mode)
-                  "\\*\\(Warnings\\|Compile-Log\\|Org Links\\)\\*"
-                  ,world-clock-buffer-name))
-           (display-buffer-reuse-mode-window display-buffer-at-bottom)
-           (window-height . 0.3)
-           (dedicated . t)
-           (preserve-size . (t . t)))
-          ("\\*Embark Actions\\*"
-           (display-buffer-reuse-mode-window display-buffer-at-bottom)
-           (window-height . fit-window-to-buffer)
-           (window-parameters . ((no-other-window . t)
-                                 (mode-line-format . none))))
-          ("\\*\\(Output\\|Register Preview\\).*"
-           (display-buffer-reuse-mode-window display-buffer-at-bottom))
-          ;; below current window
-          ((derived-mode . help-mode) ; See the hooks for `visual-line-mode'
-           (display-buffer-reuse-mode-window display-buffer-below-selected))
-          ("\\*\\vc-\\(incoming\\|outgoing\\|git : \\).*"
-           (display-buffer-reuse-mode-window display-buffer-below-selected)
-           (window-height . 0.1)
-           (dedicated . t)
-           (preserve-size . (t . t)))
-          ((derived-mode . log-view-mode)
-           (display-buffer-reuse-mode-window display-buffer-below-selected)
-           (window-height . 0.3)
-           (preserve-size . (t . t)))
-          ((derived-mode . reb-mode) ; M-x re-builder
-           (display-buffer-reuse-mode-window display-buffer-below-selected)
-           (window-height . 4) ; note this is literal lines, not relative
-           (dedicated . t)
-           (preserve-size . (t . t)))
-          ("\\*\\(Calendar\\|Bookmark Annotation\\|Buffer List\\|Occur\\).*"
-           (display-buffer-reuse-mode-window display-buffer-below-selected)
-           (window-height . fit-window-to-buffer))
-          ;; NOTE 2022-09-10: The following is for `ispell-word', though
-          ;; it only works because I override `ispell-display-buffer'
-          ;; with `prot-spell-ispell-display-buffer' and change the
-          ;; value of `ispell-choices-buffer'.
-          ("\\*ispell-top-choices\\*.*"
-           (display-buffer-reuse-mode-window display-buffer-below-selected)
-           (window-height . fit-window-to-buffer))
-          ;; same window
+  (display-buffer-alist	;; from prot
+   '(;; no window
+     ("\\`\\*Async Shell Command\\*\\'"
+      (display-buffer-no-window))
+     ;; bottom side window
+     ("\\*Org Select\\*"	     ; the `org-capture' key selection
+      (display-buffer-in-side-window)
+      (dedicated . t)
+      (side . bottom)
+      (slot . 0)
+      (window-parameters . ((mode-line-format . none))))
+     ;; bottom buffer (NOT side window)
+     ((or . ((derived-mode . flymake-diagnostics-buffer-mode)
+             (derived-mode . flymake-project-diagnostics-mode)
+             (derived-mode . messages-buffer-mode)
+             (derived-mode . backtrace-mode)
+             "\\*\\(Warnings\\|Compile-Log\\|Org Links\\)\\*"
+             ,world-clock-buffer-name))
+      (display-buffer-reuse-mode-window display-buffer-at-bottom)
+      (window-height . 0.3)
+      (dedicated . t)
+      (preserve-size . (t . t)))
+     ("\\*Embark Actions\\*"
+      (display-buffer-reuse-mode-window display-buffer-at-bottom)
+      (window-height . fit-window-to-buffer)
+      (window-parameters . ((no-other-window . t)
+                            (mode-line-format . none))))
+     ("\\*\\(Output\\|Register Preview\\).*"
+      (display-buffer-reuse-mode-window display-buffer-at-bottom))
+     ;; below current window
+     ((derived-mode . help-mode) ; See the hooks for `visual-line-mode'
+      (display-buffer-reuse-mode-window display-buffer-below-selected))
+     ("\\*\\vc-\\(incoming\\|outgoing\\|git : \\).*"
+      (display-buffer-reuse-mode-window display-buffer-below-selected)
+      (window-height . 0.1)
+      (dedicated . t)
+      (preserve-size . (t . t)))
+     ((derived-mode . log-view-mode)
+      (display-buffer-reuse-mode-window display-buffer-below-selected)
+      (window-height . 0.3)
+      (preserve-size . (t . t)))
+     ((derived-mode . reb-mode)		; M-x re-builder
+      (display-buffer-reuse-mode-window display-buffer-below-selected)
+      (window-height . 4)   ; note this is literal lines, not relative
+      (dedicated . t)
+      (preserve-size . (t . t)))
+     ("\\*\\(Calendar\\|Bookmark Annotation\\|Buffer List\\|Occur\\).*"
+      (display-buffer-reuse-mode-window display-buffer-below-selected)
+      (window-height . fit-window-to-buffer))
+     ;; NOTE 2022-09-10: The following is for `ispell-word', though
+     ;; it only works because I override `ispell-display-buffer'
+     ;; with `prot-spell-ispell-display-buffer' and change the
+     ;; value of `ispell-choices-buffer'.
+     ("\\*ispell-top-choices\\*.*"
+      (display-buffer-reuse-mode-window display-buffer-below-selected)
+      (window-height . fit-window-to-buffer))
+     ;; same window
 
-          ;; NOTE 2023-02-17: `man' does not fully obey the
-          ;; `display-buffer-alist'.  It works for new frames and for
-          ;; `display-buffer-below-selected', but otherwise is
-          ;; unpredictable.  See `Man-notify-method'.
+     ;; NOTE 2023-02-17: `man' does not fully obey the
+     ;; `display-buffer-alist'.  It works for new frames and for
+     ;; `display-buffer-below-selected', but otherwise is
+     ;; unpredictable.  See `Man-notify-method'.
 
-          ;; ((or . ((derived-mode . Man-mode)
-          ;;         (derived-mode . woman-mode)
-          ;;         "\\*\\(Man\\|woman\\).*"))
-          ;;  (display-buffer-same-window))
-          ))
+     ;; ((or . ((derived-mode . Man-mode)
+     ;;         (derived-mode . woman-mode)
+     ;;         "\\*\\(Man\\|woman\\).*"))
+     ;;  (display-buffer-same-window))
+     ))
   (confirm-nonexistent-file-or-buffer t)
   )		  
 ;; (prot/display-buffer-shell-or-term-p ; see definition below
