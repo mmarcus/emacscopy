@@ -38,6 +38,7 @@
 	embark
 	embark-consult
 	expand-region
+	gptel
 	kpm-list
 	;; lsp-treemacs ;;using eglot for now instead
 	;; lsp-ui ;;using eglot for now instead
@@ -507,6 +508,9 @@
 (use-package expand-region
   :bind ("C-=" . er/expand-region))
 
+(use-package gptel
+  :defer t)
+
 (use-package jwiegley
   :load-path "~/lisp")
 
@@ -865,3 +869,7 @@
 ;; ## added by OPAM user-setup for emacs / base ## 56ab50dc8996d2bb95e7856a6eddb17b ## you can edit, but keep this line
 ;;(require 'opam-user-setup "~/.emacs.d/opam-user-setup.el")
 ;; ## end of OPAM user-setup addition for emacs / base ## keep this line
+
+(load-file (let ((coding-system-for-read 'utf-8))
+                (shell-command-to-string "agda-mode locate")))
+;;(shell-command-to-string "echo $PATH")
